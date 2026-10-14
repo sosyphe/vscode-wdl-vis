@@ -1,6 +1,6 @@
 {
   "name": "vscode-wdl-vis",
-  "displayName": "WDL Viewer",
+  "displayName": "WDL Vis",
   "description": "WDL syntax highlighting, outline, folding and live DAG visualization for VS Code, powered by the wdl-viewer parser.",
   "version": "0.1.0",
   "publisher": "sosyphe",
