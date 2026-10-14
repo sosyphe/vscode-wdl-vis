@@ -1,0 +1,125 @@
+{
+  "name": "vscode-wdl-vis",
+  "displayName": "WDL Viewer",
+  "description": "WDL syntax highlighting, outline, folding and live DAG visualization for VS Code, powered by the wdl-viewer parser.",
+  "version": "0.1.0",
+  "publisher": "sosyphe",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sosyphe/vscode-wdl-vis"
+  },
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization"
+  ],
+  "keywords": [
+    "wdl",
+    "workflow",
+    "bioinformatics",
+    "dag",
+    "visualization"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "wdl",
+        "aliases": [
+          "WDL",
+          "wdl"
+        ],
+        "extensions": [
+          ".wdl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "wdl",
+        "scopeName": "source.wdl",
+        "path": "./syntaxes/wdl.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "wdl.openGraph",
+        "title": "Open Workflow Graph",
+        "category": "WDL",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "wdl.showDiagnostics",
+        "title": "Show Performance Diagnostics",
+        "category": "WDL"
+      }
+    ],
+    "configuration": {
+      "title": "WDL Viewer",
+      "properties": {
+        "wdl.viewer.background": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "enumItemLabels": [
+            "Auto (follow VS Code theme)",
+            "Light",
+            "Dark"
+          ],
+          "enumDescriptions": [
+            "Match the current VS Code color theme.",
+            "Always use a light background — recommended when the graph is hard to read on dark themes.",
+            "Always use a dark background."
+          ],
+          "default": "auto",
+          "markdownDescription": "Background color scheme of the workflow graph webview.",
+          "scope": "window"
+        },
+        "wdl.viewer.trace": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Log go-to-definition timings, webview payload sizes and extension-host event-loop stalls to a **WDL Viewer** output channel. Use this with _WDL: Show Performance Diagnostics_ to tell a slow scan apart from a blocked extension host. Off by default; no output channel is created while it is off.",
+          "scope": "window"
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "wdl.openGraph",
+          "when": "resourceLangId == wdl",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies --baseImagesUrl https://raw.githubusercontent.com/sosyphe/vscode-wdl-vis/main",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "wdl-viewer": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.84.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^24.1.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0",
+    "vue": "^3.4.0"
+  }
+}

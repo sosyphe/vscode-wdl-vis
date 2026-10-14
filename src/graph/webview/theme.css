@@ -1,0 +1,540 @@
+/*
+ * Webview layout + VS Code theme adaptation.
+ *
+ * Loaded as a *separate* stylesheet after dist/webview.css (which esbuild emits
+ * from the `wdl-viewer/style.css` import) so these rules cascade last.
+ *
+ * Specificity note: wdl-viewer ships Vue scoped styles, i.e. `.wdl-viewer[data-v-xxx]`
+ * — specificity (0,2,0). A plain `.wdl-viewer` override (0,1,0) would lose, so
+ * every override below doubles the class to reach (0,2,0) and wins on order.
+ * Descendant chains must double EVERY part (`.kind-x.kind-x .label.label` (0,4,0)
+ * beats the library's `.kind-x .label[data-v]` (0,3,0)). SVG presentation
+ * attributes (fill="white") rank below *any* CSS rule, so those need no trick.
+ * Never write `[data-v-*]` selectors here — the hashes change per library build.
+ *
+ * Colour model — exactly TWO complete palettes (light and dark), each defining
+ * every --wdl-* / --wdl-code-* token:
+ *   LIGHT = the base `body` block. It is the default for pinned Light, for
+ *   `auto` on a light workbench, and for any host without vscode-* body classes
+ *   (matching the standalone library's light-first design).
+ *   DARK  = one grouped rule: pinned Dark (`data-wdl-bg='dark'`), or `auto` on a
+ *   dark/high-contrast workbench via the `vscode-dark` / `vscode-high-contrast`
+ *   body classes, which VS Code keeps in sync with the active color theme and
+ *   stamps onto the document at creation (so `auto` resolves before the first
+ *   host message; an absent `data-wdl-bg` attribute satisfies the `:not()`
+ *   guards and behaves as auto). HC-dark carries `vscode-high-contrast` and
+ *   maps to the dark palette; HC-light uses the distinct class
+ *   `vscode-high-contrast-light`, which does not match, so it stays light.
+ *   The `:not([data-wdl-bg='light'])` guards make pinned Light win on any
+ *   workbench.
+ *
+ * `prefers-color-scheme` is deliberately NOT consulted: in Electron webviews it
+ * can reflect the OS preference rather than the workbench theme (dark GTK +
+ * light VS Code used to render a dark SCRIPT snippet inside an otherwise light
+ * panel).
+ *
+ * VS Code chrome (status strip, Auto/Light/Dark switch, layout buttons, warning
+ * banner) deliberately keeps reading `--vscode-*` directly in every mode.
+ *
+ * The inspector's SCRIPT snippet reads the `--wdl-code-*` tokens (WdlCodeBlock
+ * falls back to its GitHub-light palette when they are absent, so the standalone
+ * library is unaffected).
+ */
+
+/* --- palette: light (complete scheme) -------------------------------------- */
+
+body {
+  /* Flip UA-rendered parts (scrollbars under overlay implementations, form
+     controls, default colours) to the light scheme. Inherited by the whole
+     panel. */
+  color-scheme: light;
+
+  --wdl-bg: #f5f7ff;
+  --wdl-fg: #24292f;
+  --wdl-muted: #57606a;
+  --wdl-panel-bg: #ffffff;
+  --wdl-header-bg: #eef0ff;
+  --wdl-border: rgba(60, 70, 120, 0.25);
+  --wdl-dot: rgba(60, 70, 120, 0.28);
+  --wdl-accent: #4a6cf7;
+  --wdl-accent-hover: #2a4cd7;
+  --wdl-focus: #007fd4;
+  --wdl-hover-bg: rgba(74, 108, 247, 0.12);
+  --wdl-badge-bg: #e8eaf6;
+  --wdl-badge-fg: #303a70;
+  --wdl-green: #2e8f58;
+  --wdl-orange: #c07a30;
+  --wdl-scrollbar-thumb: rgba(60, 70, 120, 0.28);
+  --wdl-scrollbar-thumb-hover: rgba(60, 70, 120, 0.45);
+  --wdl-scrollbar-thumb-active: rgba(60, 70, 120, 0.6);
+  --wdl-scrollbar-track: transparent;
+
+  /* Surface tokens matching the library's hardcoded light defaults, so pinned
+     light is pixel-identical to the standalone rendering. */
+  --wdl-divider: #eef0f8;
+  --wdl-runtime-bg: #fffaf5;
+  --wdl-runtime-border: #f0dcc0;
+  --wdl-chip-bg: #fff5ee;
+  --wdl-chip-fg: #e06c2c;
+  --wdl-node-bg: #f8f9ff;
+  --wdl-node-border: #c0c8e8;
+
+  /* Standard scrollbar styling, inherited by every scroller in the panel.
+     Current Chromium honours these even where it ignores ::-webkit-scrollbar
+     (overlay scrollbars on Linux), so they are the primary mechanism; the
+     pseudo-elements at the bottom of this file cover older Chromium. */
+  scrollbar-color: var(--wdl-scrollbar-thumb) var(--wdl-scrollbar-track);
+  scrollbar-width: thin;
+
+  /* SCRIPT snippet — GitHub-light, matching WdlCodeBlock's own fallbacks. */
+  --wdl-code-bg: #f6f8fa;
+  --wdl-code-fg: #24292e;
+  --wdl-code-keyword: #d73a49;
+  --wdl-code-type: #6f42c1;
+  --wdl-code-title: #005cc5;
+  --wdl-code-string: #032f62;
+  --wdl-code-number: #005cc5;
+  --wdl-code-comment: #6a737d;
+  --wdl-code-variable: #e36209;
+  --wdl-code-literal: #005cc5;
+}
+
+/* --- palette: dark (complete scheme, aligned with VS Code's Dark+ colors) ----
+   Pinned Dark, or auto/high-contrast-dark workbenches. The :not() guards keep
+   pinned Light in control regardless of the surrounding theme. */
+
+body[data-wdl-bg='dark'],
+body.vscode-dark:not([data-wdl-bg='light']),
+body.vscode-high-contrast:not([data-wdl-bg='light']) {
+  color-scheme: dark;
+
+  --wdl-bg: #1e1e1e;
+  --wdl-fg: #d4d4d4;
+  --wdl-muted: #9d9d9d;
+  --wdl-panel-bg: #252526;
+  --wdl-header-bg: rgba(255, 255, 255, 0.06);
+  --wdl-border: rgba(128, 128, 128, 0.35);
+  --wdl-dot: rgba(255, 255, 255, 0.18);
+  --wdl-accent: #4a9eff;
+  --wdl-accent-hover: #7cbaff;
+  --wdl-focus: #007fd4;
+  --wdl-hover-bg: rgba(255, 255, 255, 0.1);
+  --wdl-badge-bg: #3a3d41;
+  --wdl-badge-fg: #d4d4d4;
+  --wdl-green: #6cc08a;
+  --wdl-orange: #d69a5c;
+  --wdl-scrollbar-thumb: rgba(255, 255, 255, 0.22);
+  --wdl-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  --wdl-scrollbar-thumb-active: rgba(255, 255, 255, 0.45);
+  --wdl-scrollbar-track: transparent;
+
+  --wdl-divider: rgba(255, 255, 255, 0.09);
+  --wdl-runtime-bg: #2b2620;
+  --wdl-runtime-border: #4a3d2e;
+  --wdl-chip-bg: #3a2e24;
+  --wdl-chip-fg: #e89a68;
+  --wdl-node-bg: #2d2d30;
+  --wdl-node-border: #4d4d56;
+
+  /* SCRIPT snippet — Dark+, consistent with the palette above. */
+  --wdl-code-bg: #1e1e1e;
+  --wdl-code-fg: #d4d4d4;
+  --wdl-code-keyword: #569cd6;
+  --wdl-code-type: #4ec9b0;
+  --wdl-code-title: #dcdcaa;
+  --wdl-code-string: #ce9178;
+  --wdl-code-number: #b5cea8;
+  --wdl-code-comment: #6a9955;
+  --wdl-code-variable: #9cdcfe;
+  --wdl-code-literal: #569cd6;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--vscode-font-family, 'Segoe UI', system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--wdl-fg);
+  background: var(--wdl-bg);
+}
+
+.wdl-webview-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.wdl-webview-graph {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* VS Code chrome: stays on `--vscode-*` in every background mode. */
+.wdl-webview-status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-statusBar-background, transparent);
+  border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  white-space: nowrap;
+}
+
+.wdl-webview-status__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Background-mode switch: segmented Auto / Light / Dark buttons. */
+.wdl-bg-switch {
+  flex: 0 0 auto;
+  display: flex;
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.wdl-bg-switch__btn {
+  padding: 1px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  line-height: 16px;
+  border: none;
+  border-right: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wdl-bg-switch__btn:last-child {
+  border-right: none;
+}
+
+.wdl-bg-switch__btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+  color: var(--vscode-editor-foreground);
+}
+
+.wdl-bg-switch__btn.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.wdl-bg-switch__btn.active:hover {
+  background: var(--vscode-button-hoverBackground, var(--vscode-button-background));
+  color: var(--vscode-button-foreground);
+}
+
+/* --- parse error banner (surfaced here, not in the Problems panel) --------- */
+
+.wdl-parse-errors {
+  flex: 0 0 auto;
+  max-height: 30%;
+  overflow: auto;
+  padding: 6px 10px;
+  font-size: 11px;
+  background: var(--vscode-inputValidation-warningBackground, #fff8f0);
+  border-bottom: 1px solid var(--vscode-inputValidation-warningBorder, #f0c090);
+  color: var(--vscode-inputValidation-warningForeground, #a05020);
+}
+
+.wdl-parse-errors__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.wdl-parse-errors__list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.wdl-parse-errors__item {
+  font-family: var(--vscode-editor-font-family, monospace);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wdl-parse-errors__more {
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* --- viewer chrome -------------------------------------------------------- */
+
+.wdl-viewer.wdl-viewer {
+  background: var(--wdl-bg);
+}
+
+.layout-toolbar.layout-toolbar {
+  background: var(--wdl-header-bg);
+  border-bottom: 1px solid var(--wdl-border);
+}
+
+.toolbar-label.toolbar-label {
+  color: var(--wdl-muted);
+}
+
+/* Real buttons keep the VS Code look in every mode. */
+.layout-btn.layout-btn {
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  border: 1px solid var(--vscode-button-border, transparent);
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+}
+
+.layout-btn.layout-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-toolbar-hoverBackground));
+}
+
+.layout-btn.active.layout-btn.active {
+  background: var(--vscode-button-background);
+  border-color: var(--vscode-button-border, var(--vscode-button-background));
+  color: var(--vscode-button-foreground);
+}
+
+/* --- graph canvas --------------------------------------------------------- */
+
+.wdl-graph-container.wdl-graph-container {
+  background-color: var(--wdl-bg);
+  background-image: radial-gradient(circle, var(--wdl-dot) 1px, transparent 1px);
+}
+
+.group-bg.group-bg,
+.group-bg-scatter_group.group-bg-scatter_group {
+  fill-opacity: 0.08;
+  stroke: var(--wdl-focus);
+}
+
+.ctrl-btn.ctrl-btn {
+  fill: var(--wdl-accent);
+}
+
+.ctrl-btn.ctrl-btn:hover {
+  fill: var(--wdl-accent-hover);
+}
+
+.empty-text.empty-text {
+  fill: var(--wdl-muted);
+}
+
+/* Zoom control chrome (SVG presentation attributes → plain CSS wins). */
+.wdl-controls > rect {
+  fill: var(--wdl-panel-bg);
+  stroke: var(--wdl-border);
+}
+
+.wdl-controls > line {
+  stroke: var(--wdl-border);
+}
+
+.wdl-graph-svg marker path {
+  fill: var(--wdl-accent);
+}
+
+/* Node card body — scoped `.node-rect[data-v]` (0,2,0); doubled ties, order
+   wins. `.wdl-node.conditional .node-rect[data-v]` (0,3,0) only sets
+   stroke-dasharray — no conflict. */
+.node-rect.node-rect {
+  fill: var(--wdl-node-bg);
+  stroke: var(--wdl-node-border);
+}
+
+/* Port name labels inside node bodies (also used by .collapsed-summary). */
+.input-body-label.input-body-label {
+  fill: var(--wdl-accent);
+}
+
+.output-body-label.output-body-label {
+  fill: var(--wdl-green);
+}
+
+/* Task-name sublabel below the header (#888 lacks contrast on dark cards). */
+.node-sublabel.node-sublabel {
+  fill: var(--wdl-muted);
+}
+
+/* Group labels. The scatter variant needs the FULL chain doubled: the library's
+   `.kind-scatter_group .group-label[data-v]` is (0,3,0) and would beat
+   `.group-label.group-label` (0,2,0); doubling both parts gives (0,4,0). */
+.group-label.group-label {
+  fill: var(--wdl-accent);
+}
+
+.kind-scatter_group.kind-scatter_group .group-label.group-label {
+  fill: var(--wdl-green);
+}
+
+/* Port circles: kill the white fill on dark cards. The library hover state
+   `.port-circle.hovered[data-v]` (0,3,0) deliberately keeps its pale-blue fill
+   — it outranks this (0,2,0) rule and reads well on both palettes. Port
+   strokes (#5a9bd5 / #5ab57f / #7c8cbe) pass 3:1 on both node backgrounds. */
+.port-circle.port-circle {
+  fill: var(--wdl-node-bg);
+}
+
+/* Port hover tooltip — teleported to <body> with UNSCOPED library styles
+   (0,1,0); doubled to (0,2,0) so specificity, not just order, decides. */
+.port-tooltip.port-tooltip {
+  background: var(--wdl-panel-bg);
+  border-color: var(--wdl-border);
+  color: var(--wdl-fg);
+}
+
+.tooltip-name.tooltip-name {
+  color: var(--wdl-accent);
+}
+
+.tooltip-sep.tooltip-sep,
+.tooltip-type.tooltip-type {
+  color: var(--wdl-muted);
+}
+
+/* --- inspector ------------------------------------------------------------ */
+
+.wdl-inspector.wdl-inspector {
+  background: var(--wdl-panel-bg);
+  border-top: 2px solid var(--wdl-border);
+  color: var(--wdl-fg);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.inspector-header.inspector-header {
+  background: var(--wdl-header-bg);
+  border-bottom: 1px solid var(--wdl-border);
+}
+
+.inspector-title.inspector-title {
+  color: var(--wdl-fg);
+}
+
+.inspector-close.inspector-close {
+  color: var(--wdl-muted);
+}
+
+.inspector-close.inspector-close:hover {
+  background: var(--wdl-hover-bg);
+  color: var(--wdl-fg);
+}
+
+/* Library `.drag-handle:hover[data-v]` is (0,3,0); doubled + :hover ties and
+   wins on load order. */
+.drag-handle.drag-handle:hover {
+  background: var(--wdl-hover-bg);
+}
+
+.row-top.row-top {
+  border-bottom: 1px solid var(--wdl-divider);
+}
+
+.section.section {
+  border-right: 1px solid var(--wdl-divider);
+}
+
+.row-runtime.row-runtime {
+  background: var(--wdl-runtime-bg);
+  border-top: 1px solid var(--wdl-runtime-border);
+}
+
+.section-label.section-label,
+.runtime-key.runtime-key {
+  color: var(--wdl-muted);
+}
+
+.runtime-val.runtime-val,
+.port-name.port-name {
+  color: var(--wdl-fg);
+}
+
+.empty-msg.empty-msg {
+  color: var(--wdl-muted);
+}
+
+/* Port type pills keep their semantic colours but adapt to the theme surface. */
+.input-type.input-type,
+.output-type.output-type {
+  background: var(--wdl-badge-bg);
+  color: var(--wdl-badge-fg);
+}
+
+/* Default-value chip (own bg+fg so it is NOT part of the fg group above). */
+.port-default.port-default {
+  background: var(--wdl-chip-bg);
+  color: var(--wdl-chip-fg);
+}
+
+.input-label.input-label {
+  color: var(--wdl-accent);
+}
+
+.output-label.output-label {
+  color: var(--wdl-green);
+}
+
+.runtime-label.runtime-label {
+  color: var(--wdl-orange);
+}
+
+.script-label.script-label {
+  color: var(--wdl-muted);
+}
+
+/* SCRIPT snippet reset: VS Code injects a default stylesheet into every
+   webview that styles bare `code` elements with workbench colors
+   (--vscode-textPreformat-*), the Monaco font and chip padding. That paints
+   the snippet's inner <code> independently of the selected palette — e.g. a
+   near-black rectangle over the light <pre> in Light mode on a dark
+   workbench. The pre carries all --wdl-code-* styling; (0,1,1) beats the
+   injected bare-element rule (0,0,1), so inherit everything back. */
+.wdl-code-block code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* --- scrollbars ----------------------------------------------------------- */
+
+/* Fallback scrollbar styling for Chromium versions that predate
+   scrollbar-color/scrollbar-width support (the standard properties on body
+   win wherever they are honoured). Native scrollbars follow the palette's
+   color-scheme, so they flip together with the tokens in every mode. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--wdl-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--wdl-scrollbar-thumb);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--wdl-scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--wdl-scrollbar-thumb-active);
+}

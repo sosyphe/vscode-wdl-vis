@@ -1,0 +1,191 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "WDL",
+  "scopeName": "source.wdl",
+  "fileTypes": ["wdl"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#version-declaration" },
+    { "include": "#import-declaration" },
+    { "include": "#struct-declaration" },
+    { "include": "#workflow-declaration" },
+    { "include": "#task-declaration" },
+    { "include": "#call-statement" },
+    { "include": "#command-block-heredoc" },
+    { "include": "#command-block-brace" },
+    { "include": "#control-keyword" },
+    { "include": "#section-keyword" },
+    { "include": "#type" },
+    { "include": "#literal" },
+    { "include": "#number" },
+    { "include": "#string" },
+    { "include": "#placeholder" },
+    { "include": "#function-call" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.wdl"
+    },
+
+    "version-declaration": {
+      "match": "^\\s*(version)\\s+([0-9]+(?:\\.[0-9]+)*)",
+      "captures": {
+        "1": { "name": "keyword.control.version.wdl" },
+        "2": { "name": "constant.numeric.version.wdl" }
+      }
+    },
+
+    "import-declaration": {
+      "match": "\\b(import)\\s+(\"[^\"]*\"|\\S+)(?:\\s+(as)\\s+(\\w+))?",
+      "captures": {
+        "1": { "name": "keyword.control.import.wdl" },
+        "2": { "name": "string.unquoted.import.wdl" },
+        "3": { "name": "keyword.control.as.wdl" },
+        "4": { "name": "entity.name.namespace.wdl" }
+      }
+    },
+
+    "struct-declaration": {
+      "match": "\\b(struct)\\s+(\\w+)",
+      "captures": {
+        "1": { "name": "storage.type.struct.wdl" },
+        "2": { "name": "entity.name.type.struct.wdl" }
+      }
+    },
+
+    "workflow-declaration": {
+      "match": "\\b(workflow)\\s+(\\w+)",
+      "captures": {
+        "1": { "name": "storage.type.workflow.wdl" },
+        "2": { "name": "entity.name.class.workflow.wdl" }
+      }
+    },
+
+    "task-declaration": {
+      "match": "\\b(task)\\s+(\\w+)",
+      "captures": {
+        "1": { "name": "storage.type.task.wdl" },
+        "2": { "name": "entity.name.function.task.wdl" }
+      }
+    },
+
+    "call-statement": {
+      "match": "\\b(call)\\s+([\\w.]+)(?:\\s+(as)\\s+(\\w+))?",
+      "captures": {
+        "1": { "name": "keyword.control.call.wdl" },
+        "2": { "name": "entity.name.function.call.wdl" },
+        "3": { "name": "keyword.control.as.wdl" },
+        "4": { "name": "variable.other.alias.wdl" }
+      }
+    },
+
+    "control-keyword": {
+      "match": "\\b(if|else|then|scatter|in|object)\\b",
+      "name": "keyword.control.wdl"
+    },
+
+    "section-keyword": {
+      "match": "\\b(input|output|runtime|meta|parameter_meta)\\b",
+      "name": "keyword.other.section.wdl"
+    },
+
+    "type": {
+      "match": "\\b(String|Int|Float|File|Boolean|Array|Map|Pair|Object)\\b\\s*(\\?)?",
+      "captures": {
+        "1": { "name": "support.type.primitive.wdl" },
+        "2": { "name": "keyword.operator.optional.wdl" }
+      }
+    },
+
+    "literal": {
+      "match": "\\b(true|false|null|None)\\b",
+      "name": "constant.language.wdl"
+    },
+
+    "number": {
+      "match": "\\b(?:0[xX][0-9a-fA-F]+|(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?)\\b",
+      "name": "constant.numeric.wdl"
+    },
+
+    "function-call": {
+      "match": "\\b([A-Za-z_]\\w*)\\s*(?=\\()",
+      "name": "entity.name.function.wdl"
+    },
+
+    "string": {
+      "name": "string.quoted.double.wdl",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.wdl" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.wdl" } },
+      "patterns": [
+        { "match": "\\\\[\\\\\"'`nrt$~]", "name": "constant.character.escape.wdl" },
+        { "include": "#placeholder" }
+      ]
+    },
+
+    "placeholder": {
+      "comment": "Content must NOT use meta.embedded.*: VS Code's base themes force that family to the plain editor foreground, which rendered ~{greeting} as flat black on light themes. variable.other.readwrite is themed by Light+/Dark+ and third-party themes alike; punctuation.section.embedded gives the ~{ } delimiters the template-bracket colour themes already define.",
+      "name": "meta.interpolation.wdl",
+      "begin": "[~$]\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.wdl" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.wdl" } },
+      "contentName": "variable.other.readwrite.wdl",
+      "patterns": [
+        { "include": "#string" },
+        { "include": "#number" },
+        { "include": "#literal" },
+        { "include": "#type" },
+        { "include": "#control-keyword" },
+        { "include": "#function-call" }
+      ]
+    },
+
+    "command-block-heredoc": {
+      "comment": "command <<< ... >>> — the delimiter is unambiguous, so shell text containing braces is safe here.",
+      "name": "meta.command.block.heredoc.wdl",
+      "begin": "\\b(command)\\s*(<<<)",
+      "end": "(>>>)",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.command.wdl" },
+        "2": { "name": "punctuation.definition.command.begin.wdl" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.command.end.wdl" }
+      },
+      "contentName": "string.unquoted.command.wdl",
+      "patterns": [{ "include": "#placeholder" }]
+    },
+
+    "command-block-brace": {
+      "comment": "command { ... } — braces also occur in shell bodies (awk '{print}'), so nested brace groups are matched recursively before the closing `}` can end the block. A future enhancement could `include: source.shell` here, but WDL's ~{...} placeholders are not shell syntax and embedding shell would mis-tokenize them.",
+      "name": "meta.command.block.brace.wdl",
+      "begin": "\\b(command)\\s*(\\{)",
+      "end": "(\\})",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.command.wdl" },
+        "2": { "name": "punctuation.section.block.begin.wdl" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.block.end.wdl" }
+      },
+      "contentName": "string.unquoted.command.wdl",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "#command-brace-group" }
+      ]
+    },
+
+    "command-brace-group": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "string.unquoted.command.wdl",
+      "patterns": [
+        { "include": "#placeholder" },
+        { "include": "#command-brace-group" }
+      ]
+    }
+  }
+}
